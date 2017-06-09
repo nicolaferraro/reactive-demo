@@ -13,6 +13,7 @@
     <modules>
         <module>vertx-module</module>
         <module>springboot-module</module>
+        <module>grpc-module</module>
     </modules>
     
 </project>

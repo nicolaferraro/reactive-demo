@@ -4,12 +4,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 import io.reactivex.Flowable;
-import io.reactivex.processors.FlowableProcessor;
-import io.reactivex.processors.PublishProcessor;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpServer;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -26,13 +23,13 @@ import io.vertx.ext.web.handler.sockjs.SockJSHandler;
 
 import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
-import org.apache.camel.Expression;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.reactive.streams.api.CamelReactiveStreams;
 import org.apache.camel.component.reactive.streams.api.CamelReactiveStreamsService;
 import org.apache.camel.impl.DefaultCamelContext;
-import org.apache.camel.model.dataformat.JsonLibrary;
 import org.apache.camel.util.toolbox.AggregationStrategies;
+
+import reactive.demo.grpc.Point;
 
 /**
  * @author nicola
@@ -45,12 +42,12 @@ public class VertxApp {
     public static void main(String[] args) throws Exception {
 
         VertxOptions options = new VertxOptions();
-        options.setBlockedThreadCheckInterval(1000*60*60);
+        //options.setBlockedThreadCheckInterval(1000*60*60);
 
         Vertx vertx = Vertx.vertx(options);
         CamelContext camel = new DefaultCamelContext();
         CamelReactiveStreamsService rxCamel = CamelReactiveStreams.get(camel);
-        configure(rxCamel);
+        configure(camel);
 
         HttpServer server = vertx.createHttpServer();
 
@@ -77,11 +74,11 @@ public class VertxApp {
                 .subscribe(points);
 
         camel.start();
-        Pump.pump(points, vertx.eventBus().sender("draw.points")).start();
+        Pump.pump(points, vertx.eventBus().publisher("draw.points")).start();
         server.listen(8080);
     }
 
-    private static void configure(CamelReactiveStreamsService rxCamel) throws Exception {
+    private static void configure(CamelContext camel) throws Exception {
 
         new RouteBuilder() {
             @Override
@@ -89,6 +86,7 @@ public class VertxApp {
 
                 from("reactive-streams:raw-points")
                     .wireTap("seda:output")
+                    .wireTap("direct:another-one")
                     .to("direct:fill-the-gap");
 
                 from("direct:fill-the-gap")
@@ -99,18 +97,28 @@ public class VertxApp {
                     //.log("${body}")
                     .transform().body(List.class, l -> new JsonArray(l).toString())
                     .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
-                    .to("netty4-http://localhost:8181/fill-the-gaps")
+                    .to("netty4-http://http://localhost:8181/fill-the-gaps")
                     .transform().body(String.class, JsonArray::new)
                     //.log("Hei ${body}")
                     .split().body()
                     .to("seda:output");
 
 
+                from("direct:another-one")
+                        .log("Req: ${body}")
+                        .transform().body(JsonObject.class, j -> Point.newBuilder().setColor(j.getString("color")).setDrawing(j.getInteger("drawing")).setX(j.getInteger("x")).setY(j.getInteger("y")).setRadius(j.getInteger("radius")).build())
+                        .to("grpc:reactive.demo.grpc.Images?method=Enhance&host=localhost&port=8282&synchronous=false")
+                        .split().body()
+                        .transform().body(Point.class, p -> new JsonObject().put("color", p.getColor()).put("drawing", p.getDrawing()).put("x", p.getX()).put("y", p.getY()).put("radius", p.getRadius()))
+                        .log("Resp: ${body}")
+                        .to("seda:output");
+
+
                 from("seda:output")
                 .to("reactive-streams:enhanced-points");
 
             }
-        }.addRoutesToCamelContext(rxCamel.getCamelContext());
+        }.addRoutesToCamelContext(camel);
 
     }
 
