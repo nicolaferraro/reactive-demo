@@ -1,0 +1,7 @@
+#canvas {
+    border-bottom-color: black;
+    border-style: solid;
+    border-width: 1px;
+
+    cursor: pointer;
+}
