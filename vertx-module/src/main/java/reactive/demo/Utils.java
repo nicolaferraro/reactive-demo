@@ -24,11 +24,11 @@ import reactive.demo.grpc.Point;
  */
 public class Utils {
 
-    public static JsonObject map(Point p) {
+    public static JsonObject toJsonObject(Point p) {
         return new JsonObject().put("color", p.getColor()).put("drawing", p.getDrawing()).put("x", p.getX()).put("y", p.getY()).put("radius", p.getRadius());
     }
 
-    public static Point map(JsonObject j) {
+    public static Point toPoint(JsonObject j) {
         return Point.newBuilder().setColor(j.getString("color")).setDrawing(j.getInteger("drawing")).setX(j.getInteger("x")).setY(j.getInteger("y")).setRadius(j.getInteger("radius")).build();
     }
 

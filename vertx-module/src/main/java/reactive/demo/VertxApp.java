@@ -106,11 +106,11 @@ public class VertxApp {
 
                 from("direct:another-one")
                         //.log("Req: ${body}")
-                        .transform().body(JsonObject.class, Utils::map)
+                        .transform().body(JsonObject.class, Utils::toPoint)
                         .to("grpc:reactive.demo.grpc.Images?method=Enhance&host=localhost&port=8282&clientMode=STREAMING&streamRepliesTo=seda:grpc-stream");
 
                 from("seda:grpc-stream")
-                        .transform().body(Point.class, Utils::map)
+                        .transform().body(Point.class, Utils::toJsonObject)
                         //.log("Resp: ${body}")
                         .to("seda:output");
 
