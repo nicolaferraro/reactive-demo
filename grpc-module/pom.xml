@@ -16,6 +16,9 @@
         <grpc.version>1.2.0</grpc.version>
         <protobuf-maven-plugin.version>0.5.0</protobuf-maven-plugin.version>
         <os-maven-plugin.version>1.5.0.Final</os-maven-plugin.version>
+
+        <reactor-core.version>3.0.7.RELEASE</reactor-core.version>
+
     </properties>
 
     <dependencies>
@@ -33,6 +36,12 @@
             <groupId>io.grpc</groupId>
             <artifactId>grpc-stub</artifactId>
             <version>${grpc.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+            <version>${reactor-core.version}</version>
         </dependency>
     </dependencies>
 

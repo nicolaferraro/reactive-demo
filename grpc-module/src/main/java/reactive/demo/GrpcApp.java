@@ -15,12 +15,16 @@
  */
 package reactive.demo;
 
+import java.time.Duration;
+
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 
 import reactive.demo.grpc.ImagesGrpc;
 import reactive.demo.grpc.Point;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.TopicProcessor;
 
 /**
  * @author nicola
@@ -49,20 +53,35 @@ public class GrpcApp {
 
         @Override
         public StreamObserver<Point> enhance(StreamObserver<Point> responseObserver) {
+
+            TopicProcessor<Point> processor = TopicProcessor.create();
+
+            Flux<Point> main = processor.map(point -> Point.newBuilder(point).setColor("#777799").setX(point.getX() + 20).setY(point.getY() + 20).build());
+
+
+            Flux<Point> secondary = processor
+                    .window(Duration.ofSeconds(4), Duration.ofSeconds(1))
+                    .flatMap(Flux::buffer)
+                    .map(MyAwesomeStuff::execute)
+                    .flatMapIterable(s -> s);
+
+
+            main.mergeWith(secondary).subscribe(responseObserver::onNext, responseObserver::onError, responseObserver::onCompleted);
+
             return new StreamObserver<Point>() {
                 @Override
                 public void onNext(Point point) {
-                    responseObserver.onNext(Point.newBuilder(point).setX(point.getX() + 20).setY(point.getY() + 20).build());
+                    processor.onNext(point);
                 }
 
                 @Override
                 public void onError(Throwable throwable) {
-                    responseObserver.onError(throwable);
+                    processor.onError(throwable);
                 }
 
                 @Override
                 public void onCompleted() {
-                    responseObserver.onCompleted();
+                    processor.onComplete();
                 }
             };
         }
