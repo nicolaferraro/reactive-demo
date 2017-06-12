@@ -106,11 +106,11 @@ public class VertxApp {
 
                 from("direct:another-one")
                         //.log("Req: ${body}")
-                        .transform().body(JsonObject.class, j -> Point.newBuilder().setColor(j.getString("color")).setDrawing(j.getInteger("drawing")).setX(j.getInteger("x")).setY(j.getInteger("y")).setRadius(j.getInteger("radius")).build())
+                        .transform().body(JsonObject.class, Utils::map)
                         .to("grpc:reactive.demo.grpc.Images?method=Enhance&host=localhost&port=8282&clientMode=STREAMING&streamRepliesTo=seda:grpc-stream");
 
                 from("seda:grpc-stream")
-                        .transform().body(Point.class, p -> new JsonObject().put("color", p.getColor()).put("drawing", p.getDrawing()).put("x", p.getX()).put("y", p.getY()).put("radius", p.getRadius()))
+                        .transform().body(Point.class, Utils::map)
                         //.log("Resp: ${body}")
                         .to("seda:output");
 
