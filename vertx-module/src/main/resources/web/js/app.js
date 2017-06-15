@@ -39,8 +39,6 @@ function getMousePos(canvas, evt) {
     var rect = canvas.getBoundingClientRect();
     return {
         drawing: currentDrawing,
-        color: "#AAAAAA",
-        radius: 5,
         x: evt.clientX - rect.left,
         y: evt.clientY - rect.top
     };

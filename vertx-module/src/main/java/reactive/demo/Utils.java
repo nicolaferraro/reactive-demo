@@ -32,4 +32,8 @@ public class Utils {
         return Point.newBuilder().setColor(j.getString("color")).setDrawing(j.getInteger("drawing")).setX(j.getInteger("x")).setY(j.getInteger("y")).setRadius(j.getInteger("radius")).build();
     }
 
+    public static JsonObject pointToCircle(Object point) {
+        return ((JsonObject) point).put("radius", 5).put("color", "#666666");
+    }
+
 }

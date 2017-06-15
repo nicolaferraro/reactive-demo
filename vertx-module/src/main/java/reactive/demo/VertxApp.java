@@ -63,10 +63,8 @@ public class VertxApp {
 
         ReactiveReadStream<Object> points = ReactiveReadStream.readStream();
         Flowable.fromPublisher(positions)
-                .map(Object::toString)
-                .map(JsonObject::new)
+                .map(Utils::pointToCircle)
                 .subscribe(rxCamel.streamSubscriber("raw-points", JsonObject.class));
-
 
         Flowable.fromPublisher(rxCamel.fromStream("enhanced-points", JsonObject.class))
                 .subscribe(points);
@@ -83,15 +81,15 @@ public class VertxApp {
             public void configure() throws Exception {
 
                 from("reactive-streams:raw-points")
-                    .wireTap("seda:output")
+                    .wireTap("direct:fill-the-gap")
                     .wireTap("direct:another-one")
-                    .to("direct:fill-the-gap");
+                    .to("seda:output");
 
                 from("direct:fill-the-gap")
                     .setHeader("drawing").body(JsonObject.class, j -> j.getInteger("drawing"))
                     .aggregate(header("drawing"))
                         .aggregationStrategy(AggregationStrategies.flexible().accumulateInCollection(LinkedList.class))
-                        .completionTimeout(10)
+                        .completionTimeout(50)
                     .transform().body(List.class, l -> new JsonArray(l).toString())
                     .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
                     .to("netty4-http://http://localhost:8181/fill-the-gaps")
