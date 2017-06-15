@@ -1,7 +1,20 @@
+body {
+    text-align: center;
+
+    background-color: #EEEEEE;
+}
+
+#canvas-container {
+    margin-left: auto;
+    margin-right: auto;
+}
+
 #canvas {
     border-bottom-color: black;
     border-style: solid;
     border-width: 1px;
 
-    cursor: pointer;
+    background-color: #FFFFFF;
+
+    cursor: crosshair;
 }

@@ -31,11 +31,12 @@ public class MyAwesomeStuff {
 
 
     public static List<Point> execute(List<Point> source) {
-        if (Math.random() >= 0.8) {
-            return source.stream().map(point -> Point.newBuilder(point).setColor("#000000").setX(point.getX() + 80).build()).collect(Collectors.toList());
-        } else {
-            return Collections.emptyList();
-        }
+//        if (Math.random() >= 0.8) {
+//            return source.stream().map(point -> Point.newBuilder(point).setColor("#000000").setX(point.getX() + 80).build()).collect(Collectors.toList());
+//        } else {
+//            return Collections.emptyList();
+//        }
+        return Collections.emptyList();
     }
 
 }

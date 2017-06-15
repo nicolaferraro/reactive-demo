@@ -65,12 +65,10 @@ public class VertxApp {
         Flowable.fromPublisher(positions)
                 .map(Object::toString)
                 .map(JsonObject::new)
-//                .doOnNext(LOG::info)
                 .subscribe(rxCamel.streamSubscriber("raw-points", JsonObject.class));
 
 
         Flowable.fromPublisher(rxCamel.fromStream("enhanced-points", JsonObject.class))
-//                .doOnNext(System.out::println)
                 .subscribe(points);
 
         camel.start();
@@ -94,24 +92,20 @@ public class VertxApp {
                     .aggregate(header("drawing"))
                         .aggregationStrategy(AggregationStrategies.flexible().accumulateInCollection(LinkedList.class))
                         .completionTimeout(10)
-                    //.log("${body}")
                     .transform().body(List.class, l -> new JsonArray(l).toString())
                     .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
                     .to("netty4-http://http://localhost:8181/fill-the-gaps")
                     .transform().body(String.class, JsonArray::new)
-                    //.log("Hei ${body}")
                     .split().body()
                     .to("seda:output");
 
 
                 from("direct:another-one")
-                        //.log("Req: ${body}")
                         .transform().body(JsonObject.class, Utils::toPoint)
-                        .to("grpc:reactive.demo.grpc.Images?method=Enhance&host=localhost&port=8282&clientMode=STREAMING&streamRepliesTo=seda:grpc-stream");
+                        .to("grpc:reactive.demo.grpc.Images?method=Enhance&host=localhost&port=8282&producerStrategy=STREAMING&streamRepliesTo=seda:grpc-stream");
 
                 from("seda:grpc-stream")
                         .transform().body(Point.class, Utils::toJsonObject)
-                        //.log("Resp: ${body}")
                         .to("seda:output");
 
 
