@@ -31,10 +31,6 @@ import org.apache.camel.util.toolbox.AggregationStrategies;
 
 import reactive.demo.grpc.Point;
 
-/**
- * @author nicola
- * @since 07/06/2017
- */
 public class VertxApp {
 
     private static final Logger LOG = LoggerFactory.getLogger(VertxApp.class);
@@ -58,10 +54,11 @@ public class VertxApp {
 
 
         ReactiveWriteStream<Object> positions = ReactiveWriteStream.writeStream(vertx);
+        ReactiveReadStream<Object> points = ReactiveReadStream.readStream();
+
         Pump.pump(vertx.eventBus().consumer("draw.positions").bodyStream(), positions).start();
 
 
-        ReactiveReadStream<Object> points = ReactiveReadStream.readStream();
         Flowable.fromPublisher(positions)
                 .map(Utils::pointToCircle)
                 .subscribe(rxCamel.streamSubscriber("raw-points", JsonObject.class));
@@ -80,22 +77,25 @@ public class VertxApp {
             @Override
             public void configure() throws Exception {
 
+
+
                 from("reactive-streams:raw-points")
-                    .wireTap("direct:fill-the-gap")
-                    .wireTap("direct:another-one")
-                    .to("seda:output");
+                        .wireTap("direct:another-one")
+                        .wireTap("direct:fill-the-gap")
+                        .to("seda:output");
+
 
                 from("direct:fill-the-gap")
-                    .setHeader("drawing").body(JsonObject.class, j -> j.getInteger("drawing"))
-                    .aggregate(header("drawing"))
-                        .aggregationStrategy(AggregationStrategies.flexible().accumulateInCollection(LinkedList.class))
-                        .completionTimeout(50)
-                    .transform().body(List.class, l -> new JsonArray(l).toString())
-                    .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
-                    .to("netty4-http://http://localhost:8181/fill-the-gaps")
-                    .transform().body(String.class, JsonArray::new)
-                    .split().body()
-                    .to("seda:output");
+                        .setHeader("drawing").body(JsonObject.class, j -> j.getInteger("drawing"))
+                            .aggregate(header("drawing"))
+                            .aggregationStrategy(AggregationStrategies.flexible().accumulateInCollection(LinkedList.class))
+                            .completionTimeout(50)
+                        .transform().body(List.class, l -> new JsonArray(l).toString())
+                        .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                        .to("netty4-http://http://localhost:8181/fill-the-gaps")
+                        .transform().body(String.class, JsonArray::new)
+                        .split().body()
+                        .to("seda:output");
 
 
                 from("direct:another-one")
@@ -108,7 +108,8 @@ public class VertxApp {
 
 
                 from("seda:output")
-                .to("reactive-streams:enhanced-points");
+                        .to("reactive-streams:enhanced-points");
+
 
             }
         }.addRoutesToCamelContext(camel);

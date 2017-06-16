@@ -18,3 +18,9 @@ body {
 
     cursor: crosshair;
 }
+
+
+#about {
+    margin-top: 50px;
+    text-align: center;
+}
