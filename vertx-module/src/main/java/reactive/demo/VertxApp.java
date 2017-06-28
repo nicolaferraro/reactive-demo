@@ -100,7 +100,7 @@ public class VertxApp {
 
                 from("direct:another-one")
                         .transform().body(JsonObject.class, Utils::toPoint)
-                        .to("grpc:reactive.demo.grpc.Images?method=Enhance&host=localhost&port=8282&producerStrategy=STREAMING&streamRepliesTo=seda:grpc-stream");
+                        .to("grpc://localhost:8282/reactive.demo.grpc.Images?method=Enhance&producerStrategy=STREAMING&streamRepliesTo=seda:grpc-stream");
 
                 from("seda:grpc-stream")
                         .transform().body(Point.class, Utils::toJsonObject)

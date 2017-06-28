@@ -35,12 +35,12 @@ public class GrpcApp {
         @Override
         public StreamObserver<Point> enhance(StreamObserver<Point> responseObserver) {
 
-            TopicProcessor<Point> processor = TopicProcessor.create();
+            TopicProcessor<Point> input = TopicProcessor.create();
 
-            Flux<Point> main = processor.map(point -> Point.newBuilder(point).setColor("#777799").setX(point.getX() + 20).setY(point.getY() + 20).build());
+            Flux<Point> main = input.map(point -> Point.newBuilder(point).setColor("#777799").setX(point.getX() + 20).setY(point.getY() + 20).build());
 
 
-            Flux<Point> secondary = processor
+            Flux<Point> secondary = input
                     .window(Duration.ofSeconds(4), Duration.ofSeconds(1))
                     .flatMap(Flux::buffer)
                     .map(MyAwesomeStuff::execute)
@@ -52,17 +52,17 @@ public class GrpcApp {
             return new StreamObserver<Point>() {
                 @Override
                 public void onNext(Point point) {
-                    processor.onNext(point);
+                    input.onNext(point);
                 }
 
                 @Override
                 public void onError(Throwable throwable) {
-                    processor.onError(throwable);
+                    input.onError(throwable);
                 }
 
                 @Override
                 public void onCompleted() {
-                    processor.onComplete();
+                    input.onComplete();
                 }
             };
         }
