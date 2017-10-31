@@ -1,16 +1,15 @@
 package reactive.demo;
 
-import java.util.Arrays;
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import reactor.core.publisher.Flux;
 import reactor.util.function.Tuples;
+
+import java.util.Arrays;
 
 @SpringBootApplication
 public class SpringBootApp {
@@ -25,8 +24,9 @@ public class SpringBootApp {
 
         @PostMapping
         public Flux<Point> enhance(@RequestBody Flux<Point> points) {
-            return points.scan(Tuples.<Point, Point>of(null, null), (prev, point) -> Tuples.of(prev.getT2(), point))
-                    .filter(t -> t.getT1() != null)
+            Point dummy = new Point(-1, "dummy", -1, -1, -1);
+            return points.scan(Tuples.of(dummy, dummy), (prev, point) -> Tuples.of(prev.getT2(), point))
+                    .filter(t -> !t.getT1().equals(dummy))
                     .flatMapIterable(twoPoints -> Arrays.asList(
                             twoPoints.getT1(),
                             mean(twoPoints.getT1(), twoPoints.getT2()),

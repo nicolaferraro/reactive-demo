@@ -85,7 +85,7 @@ public class VertxApp {
                             .completionTimeout(50)
                         .transform().body(List.class, l -> new JsonArray(l).toString())
                         .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
-                        .to("netty4-http://http://localhost:8181/fill-the-gaps")
+                        .to("netty4-http:http://localhost:8181/fill-the-gaps?useRelativePath=true")
                         .transform().body(String.class, JsonArray::new)
                         .split().body()
                         .to("seda:output");
