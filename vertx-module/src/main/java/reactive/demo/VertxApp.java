@@ -1,8 +1,5 @@
 package reactive.demo;
 
-import java.util.LinkedList;
-import java.util.List;
-
 import io.reactivex.Flowable;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -12,15 +9,14 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.streams.Pump;
+import io.vertx.ext.bridge.BridgeEventType;
 import io.vertx.ext.reactivestreams.ReactiveReadStream;
-import io.vertx.ext.reactivestreams.ReactiveWriteStream;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.StaticHandler;
-import io.vertx.ext.web.handler.sockjs.BridgeEventType;
 import io.vertx.ext.web.handler.sockjs.BridgeOptions;
 import io.vertx.ext.web.handler.sockjs.PermittedOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSHandler;
-
+import io.vertx.reactivex.FlowableHelper;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
@@ -28,8 +24,10 @@ import org.apache.camel.component.reactive.streams.api.CamelReactiveStreams;
 import org.apache.camel.component.reactive.streams.api.CamelReactiveStreamsService;
 import org.apache.camel.impl.DefaultCamelContext;
 import org.apache.camel.util.toolbox.AggregationStrategies;
-
 import reactive.demo.grpc.Point;
+
+import java.util.LinkedList;
+import java.util.List;
 
 public class VertxApp {
 
@@ -52,14 +50,9 @@ public class VertxApp {
         router.route("/web/*").handler(StaticHandler.create("web"));
         router.route("/eventbus/*").handler(eventBusHandler(vertx));
 
-
-        ReactiveWriteStream<Object> positions = ReactiveWriteStream.writeStream(vertx);
         ReactiveReadStream<Object> points = ReactiveReadStream.readStream();
 
-        Pump.pump(vertx.eventBus().consumer("draw.positions").bodyStream(), positions).start();
-
-
-        Flowable.fromPublisher(positions)
+        FlowableHelper.toFlowable(vertx.eventBus().consumer("draw.positions").bodyStream())
                 .map(Utils::pointToCircle)
                 .subscribe(rxCamel.streamSubscriber("raw-points", JsonObject.class));
 
@@ -124,6 +117,9 @@ public class VertxApp {
         return SockJSHandler.create(vertx).bridge(options, event -> {
             if (event.type() == BridgeEventType.SOCKET_CREATED) {
                 LOG.info("A socket was created");
+            }
+            if (event.type() == BridgeEventType.SOCKET_CLOSED) {
+                LOG.info("connection closed: {}");
             }
             event.complete(true);
         });
