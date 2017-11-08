@@ -1,7 +1,7 @@
 body {
     text-align: center;
 
-    background-color: #EEEEEE;
+    background-color: #f4ead9;
 }
 
 #canvas-container {
@@ -10,17 +10,39 @@ body {
 }
 
 #canvas {
-    border-bottom-color: black;
+    border-color: #f49d00;
     border-style: solid;
-    border-width: 1px;
+    border-width: 3px;
 
-    background-color: #FFFFFF;
+    background-color: #ffffff;
 
     cursor: crosshair;
 }
 
 
 #about {
-    margin-top: 50px;
+    margin-top: 30px;
     text-align: center;
+}
+
+#myself {
+    margin-top: 30px;
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+#myself img {
+    width: 40px;
+    vertical-align: bottom;
+}
+
+#logo {
+    position: absolute;
+    left: 15px;
+    top: 15px;
+}
+
+#logo img {
+    width: 300px;
 }
