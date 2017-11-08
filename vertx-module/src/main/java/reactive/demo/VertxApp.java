@@ -53,7 +53,7 @@ public class VertxApp {
         ReactiveReadStream<Object> points = ReactiveReadStream.readStream();
 
         FlowableHelper.toFlowable(vertx.eventBus().consumer("draw.positions").bodyStream())
-                .map(Utils::pointToCircle)
+                .map(Utils::positionToPoint)
                 .subscribe(rxCamel.streamSubscriber("raw-points", JsonObject.class));
 
         Flowable.fromPublisher(rxCamel.fromStream("enhanced-points", JsonObject.class))
@@ -69,7 +69,6 @@ public class VertxApp {
         new RouteBuilder() {
             @Override
             public void configure() throws Exception {
-
 
 
                 from("reactive-streams:raw-points")
@@ -92,7 +91,7 @@ public class VertxApp {
 
 
                 from("direct:another-one")
-                        .transform().body(JsonObject.class, Utils::toPoint)
+                        .transform().body(JsonObject.class, Utils::toGrpcPoint)
                         .to("grpc://localhost:8282/reactive.demo.grpc.Images?method=Enhance&producerStrategy=STREAMING&streamRepliesTo=seda:grpc-stream");
 
                 from("seda:grpc-stream")
